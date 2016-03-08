@@ -5,10 +5,14 @@ import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Build;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.FrameLayout;
+import android.view.ViewGroup;
+
+import android.widget.RelativeLayout;
 
 import java.util.List;
 
@@ -22,7 +26,7 @@ import java.util.List;
  *         使用nineoldandroids 动画库 原生的viewAnimation 太卡，valueAnimation 不兼容低版本。
  */
 @SuppressLint("NewApi")
-public abstract class LinearScrollView<T> extends FrameLayout {
+public abstract class LinearScrollView<T> extends ViewGroup {
 
     public List<T> items;
     LayoutInflater layoutInflator;
@@ -82,26 +86,31 @@ public abstract class LinearScrollView<T> extends FrameLayout {
 
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
+                float value= (Float) animation.getAnimatedValue();
+                Log.d(TAG," 0 animationValue:"+value);
                 if (animationType >> MASK_SIZE > 0) {
-                    setCompatX(scrollView[0], (Float) animation.getAnimatedValue());
+
+                    setCompatX(scrollView[0], value);
                 } else {
-                    setCompatY(scrollView[0], (Float) animation.getAnimatedValue());
+                    setCompatY(scrollView[0], value);
                 }
 
             }
         };
         outAnimator.addUpdateListener(listener);
 
+
         ValueAnimator.AnimatorUpdateListener rightInListener = new ValueAnimator.AnimatorUpdateListener() {
 
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
 
-
+                float value= (Float) animation.getAnimatedValue();
+                Log.d(TAG," 1 animationValue:"+value);
                if (animationType >> MASK_SIZE > 0) {
-                    setCompatX(scrollView[1], (Float) animation.getAnimatedValue());
+                    setCompatX(scrollView[1],value);
                 } else {
-                    setCompatY(scrollView[1], (Float) animation.getAnimatedValue());
+                    setCompatY(scrollView[1], value);
                 }
 
 
@@ -123,17 +132,28 @@ public abstract class LinearScrollView<T> extends FrameLayout {
 
             @Override
             public void onAnimationEnd(Animator animation) {
+//                Log.d(TAG, "0 LEFT_MARGIN:" +  scrollView[0].getX());
+//                Log.d(TAG, "1 LEFT_MARGIN:" +   scrollView[1].getX());
+                currentIndex=(currentIndex+1  ) % items.size();
 
-                int nextIndex = (currentIndex + 1) % items.size();
+                int nextIndex = (currentIndex+1  ) % items.size();
                 applyItem(items.get(nextIndex), scrollView[0]);
 
                 scrollView[0].measure(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(getHeight(), MeasureSpec.EXACTLY));
+                scrollView[0].layout(0, 0, getWidth(), getHeight() );
+             //   scrollView[0].invalidate();
+
                 // 控件置换 每次动画结束后， 当前为【1】   【0】已经切出屏幕了，所以要做置换。
                 View v = scrollView[0];
                 scrollView[0] = scrollView[1];
                 scrollView[1] = v;
+
+                scrollView[0].bringToFront();
+//                setCompatX(scrollView[0],0);
+//                setCompatX(scrollView[1],getWidth());
                 postDelayed(doScroll, mAnimateTimer * 1000);
             }
+
 
             @Override
             public void onAnimationCancel(Animator animation) {
@@ -147,23 +167,51 @@ public abstract class LinearScrollView<T> extends FrameLayout {
         // outAnimator.setInterpolator(linearInterpolator);
         // inAnimator.setInterpolator(linearInterpolator);
     }
+    /**
+     * {@inheritDoc}
+     *
+     * @param changed
+     * @param l
+     * @param t
+     * @param r
+     * @param b
+     */
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
 
+
+        int width=r-l;
+        int height=b-t;
+        Log.d(TAG,"layout "+changed+",width:"+width+",height:"+height);
+        if(!changed)return ;
+        if(scrollView[0]!=null)
+        {
+            scrollView[0].layout(0,0,width,height);
+        }
+        if(scrollView[1]!=null)
+        {
+            scrollView[1].layout(0,0,width,height);
+        }
+
+    }
     /**
      * 设置x值 需要做版本适应
      */
 
     private void setCompatX(View v, float x) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
-            LayoutParams lp = (LayoutParams) v
-                    .getLayoutParams();
-            lp.leftMargin = (int) x;
-            v.setLayoutParams(lp);
+//            LayoutParams lp = (LayoutParams) v
+//                    .getLayoutParams();
+//            lp.leftMargin = (int) x;
+//            v.setLayoutParams(lp);
+            v.layout((int)x,0,(int)x+v.getWidth(),v.getHeight());
 
         } else {
 
             v.setX(x);
 
         }
+
 
     }
 
@@ -173,11 +221,8 @@ public abstract class LinearScrollView<T> extends FrameLayout {
 
     private void setCompatY(View v, float y) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
-            LayoutParams lp = (LayoutParams) v
-                    .getLayoutParams();
-            lp.topMargin = (int) y;
-            v.setLayoutParams(lp);
 
+            v.layout(0, (int) y, v.getWidth(),(int) y +  v.getHeight());
         } else {
 
             v.setY(y);
@@ -192,11 +237,9 @@ public abstract class LinearScrollView<T> extends FrameLayout {
 
     private void setCompatXY(View v, float x, float y) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
-            LayoutParams lp = (LayoutParams) v
-                    .getLayoutParams();
-            lp.topMargin = (int) y;
-            lp.leftMargin = (int) x;
-            v.setLayoutParams(lp);
+
+
+            v.layout((int) x, (int) y, (int) x+v.getWidth(), (int) y + v.getHeight());
 
         } else {
             v.setX(x);
@@ -227,10 +270,8 @@ public abstract class LinearScrollView<T> extends FrameLayout {
 
     public void nextAnimation() {
 
-        currentIndex++;
-        if (currentIndex >= items.size()) {
-            currentIndex = 0;
-        }
+
+
         starScroll();
     }
 
@@ -252,9 +293,10 @@ public abstract class LinearScrollView<T> extends FrameLayout {
 
 
     private void starScroll() {
-        if (items == null || items.size() > 1)
+        if (items != null && items.size() > 1) {
             outAnimator.start();
-        inAnimator.start();
+            inAnimator.start();
+        }
 
     }
 
@@ -311,6 +353,8 @@ public abstract class LinearScrollView<T> extends FrameLayout {
 
         updateAnimateType(w, h);
 
+        scrollView[0].measure(MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY));
+        scrollView[1].measure(MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY));
 
     }
 

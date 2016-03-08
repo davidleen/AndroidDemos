@@ -22,6 +22,8 @@ public class CustomLinearScrollView extends
 
     }
 
+
+
     @Override
     public void applyItem(Item item, View layout) {
         GiftViewHolder holder;

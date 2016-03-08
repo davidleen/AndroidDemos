@@ -1,5 +1,6 @@
 package tool.android.giants3.com.linearscrollviewlikeviewpager;
 
+import android.app.ActionBar;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -25,17 +26,17 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < 10; i++) {
             Item item = new Item();
             if (i % 2 == 0)
-                item.content = "测试测试测试";
+                item.content = i+"测试测试测试---";
             else
-                item.content = "我的基金极大解放大解放了大空间发垃圾房间的垃圾口附近的垃圾费来得及安福利就大了就发的卡减肥靠大家发电机奥拉夫";
+                item.content = i+"我的基金极大解放大解放了大空间发垃圾房间的垃圾口附近的垃圾费来得及安福利就大了就发的卡减肥靠大家发电机奥拉夫---";
             items.add(item);
         }
 
         scrollView.setData(items);
-        scrollView.setAnimationParams(1,1,LinearScrollView.ANIM_RIGHT_OUT);
+        scrollView.setAnimationParams(3,3,LinearScrollView.ANIM_RIGHT_OUT);
 
-        RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(720, 200);
-        lp.topMargin = 800;
+        RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(480, 200);
+        lp.topMargin = 400;
         ((ViewGroup) findViewById(R.id.content)).addView(scrollView, lp);
 
     }
