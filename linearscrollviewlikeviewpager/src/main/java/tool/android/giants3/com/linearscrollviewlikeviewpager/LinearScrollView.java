@@ -62,6 +62,7 @@ public abstract class LinearScrollView<T> extends ViewGroup {
 
     public LinearScrollView(Context context) {
         super(context);
+        //setLayerType(View.LAYER_TYPE_HARDWARE, null);
         // final int width = context.getResources().getDisplayMetrics().widthPixels;
         layoutInflator = LayoutInflater.from(context);
         LayoutParams lp = new LayoutParams(
@@ -71,11 +72,12 @@ public abstract class LinearScrollView<T> extends ViewGroup {
         scrollView[1] = layoutInflator.inflate(getChildLayout(), null);
         addView(scrollView[1], lp);
         addView(scrollView[0], lp);
+        setCompatX(scrollView[1], getWidth());
         scrollView[0].bringToFront();
 
 
 
-        setCompatX(scrollView[1], getWidth());
+
 
         //set a default; as left out;
         outAnimator = ValueAnimator.ofFloat(0, -getWidth());
@@ -87,7 +89,7 @@ public abstract class LinearScrollView<T> extends ViewGroup {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value= (Float) animation.getAnimatedValue();
-                Log.d(TAG," 0 animationValue:"+value);
+
                 if (animationType >> MASK_SIZE > 0) {
 
                     setCompatX(scrollView[0], value);
@@ -106,8 +108,8 @@ public abstract class LinearScrollView<T> extends ViewGroup {
             public void onAnimationUpdate(ValueAnimator animation) {
 
                 float value= (Float) animation.getAnimatedValue();
-                Log.d(TAG," 1 animationValue:"+value);
-               if (animationType >> MASK_SIZE > 0) {
+
+                if (animationType >> MASK_SIZE > 0) {
                     setCompatX(scrollView[1],value);
                 } else {
                     setCompatY(scrollView[1], value);
@@ -139,16 +141,20 @@ public abstract class LinearScrollView<T> extends ViewGroup {
                 int nextIndex = (currentIndex+1  ) % items.size();
                 applyItem(items.get(nextIndex), scrollView[0]);
 
-                scrollView[0].measure(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(getHeight(), MeasureSpec.EXACTLY));
-                scrollView[0].layout(0, 0, getWidth(), getHeight() );
-             //   scrollView[0].invalidate();
+
+                //   scrollView[0].invalidate();
 
                 // 控件置换 每次动画结束后， 当前为【1】   【0】已经切出屏幕了，所以要做置换。
                 View v = scrollView[0];
                 scrollView[0] = scrollView[1];
                 scrollView[1] = v;
 
-                scrollView[0].bringToFront();
+
+
+                // scrollView[1].measure(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(getHeight(), MeasureSpec.EXACTLY));
+                //scrollView[1].layout(0, 0, getWidth(), getHeight());
+                //  scrollView[0].bringToFront();
+
 //                setCompatX(scrollView[0],0);
 //                setCompatX(scrollView[1],getWidth());
                 postDelayed(doScroll, mAnimateTimer * 1000);
@@ -180,18 +186,12 @@ public abstract class LinearScrollView<T> extends ViewGroup {
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
 
 
+        //  Log.d(TAG,"layout "+changed+",width:"+width+",height:"+height);
+        if(!changed)return ;
+
         int width=r-l;
         int height=b-t;
-        Log.d(TAG,"layout "+changed+",width:"+width+",height:"+height);
-        if(!changed)return ;
-        if(scrollView[0]!=null)
-        {
-            scrollView[0].layout(0,0,width,height);
-        }
-        if(scrollView[1]!=null)
-        {
-            scrollView[1].layout(0,0,width,height);
-        }
+        updateAnimateType(width, height);
 
     }
     /**
@@ -351,6 +351,7 @@ public abstract class LinearScrollView<T> extends ViewGroup {
 
         //here  reset animation range;
 
+
         updateAnimateType(w, h);
 
         scrollView[0].measure(MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY));
@@ -363,26 +364,44 @@ public abstract class LinearScrollView<T> extends ViewGroup {
      */
     private void updateAnimateType(int width, int height) {
 
+        inAnimator.cancel();
+        outAnimator.cancel();
 
+        int startX=0;int startY=0;
         switch (animationType) {
             case ANIM_LEFT_OUT:
                 inAnimator.setFloatValues(width, 0);
                 outAnimator.setFloatValues(0, -width);
+                startX=width;
                 break;
             case ANIM_RIGHT_OUT:
                 inAnimator.setFloatValues(-width, 0);
                 outAnimator.setFloatValues(0, width);
+                startX=0;
                 break;
             case ANIM_TOP_OUT:
                 inAnimator.setFloatValues(height, 0);
                 outAnimator.setFloatValues(0, -height);
+                startY=height;
                 break;
             case ANIM_BOTTOM_OUT:
                 inAnimator.setFloatValues(-height, 0);
                 outAnimator.setFloatValues(0, height);
+                startY=0;
                 break;
 
         }
+
+
+        if(scrollView[0]!=null)
+        {
+            scrollView[0].layout(0,0,width,height);
+        }
+        if(scrollView[1]!=null)
+        {
+            scrollView[1].layout(startX,startY,startX+width ,startY+height);
+        }
+
 
     }
 
@@ -413,16 +432,7 @@ public abstract class LinearScrollView<T> extends ViewGroup {
 
     }
 
-    public void doMeasure() {
-        if (scrollView[0] != null) {
-            scrollView[0].measure(MeasureSpec.makeMeasureSpec(720, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(200, MeasureSpec.EXACTLY));
 
-        }
-        if (scrollView[1] != null) {
-            scrollView[1].measure(MeasureSpec.makeMeasureSpec(720, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(200, MeasureSpec.EXACTLY));
-
-        }
-    }
 
 
 

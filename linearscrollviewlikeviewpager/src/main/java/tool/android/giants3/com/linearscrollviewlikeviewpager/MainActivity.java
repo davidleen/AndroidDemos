@@ -33,9 +33,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         scrollView.setData(items);
-        scrollView.setAnimationParams(3,3,LinearScrollView.ANIM_RIGHT_OUT);
+        scrollView.setAnimationParams(3,3,LinearScrollView.ANIM_BOTTOM_OUT);
 
-        RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(480, 200);
+        RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 300);
         lp.topMargin = 400;
         ((ViewGroup) findViewById(R.id.content)).addView(scrollView, lp);
 
